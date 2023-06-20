@@ -423,6 +423,41 @@ function actions.fold_delete()
 	}
 end
 
+function actions.mini_comment()
+	local callback = function(display)
+		local status_ok, comment = pcall(require, "mini.comment")
+		if not status_ok then
+			vim.notify("mini.comment not found", vim.log.levels.ERROR)
+			return
+		end
+
+		fix_end_character_position(display.for_buf, display.focus_node.scope)
+		display.state.leaving_window_for_action = true
+		vim.api.nvim_set_current_win(display.for_win)
+
+		local start_line = display.focus_node.scope["start"].line
+		local start_char = display.focus_node.scope["start"].character
+		local end_line = display.focus_node.scope["end"].line
+		local end_char = display.focus_node.scope["end"].character
+		comment.toggle_lines(start_line, end_line, {
+			{
+				row = start_line, col = start_char
+			},
+			{
+				row = end_line, col = end_char
+			},
+		})
+
+		vim.api.nvim_set_current_win(display.mid.winid)
+		display.state.leaving_window_for_action = false
+	end
+	return {
+		callback = callback,
+		description = "Comment"
+	}
+end
+
+
 function actions.comment()
 	local callback = function(display)
 		local status_ok, comment = pcall(require, "Comment.api")
